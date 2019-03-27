@@ -79,7 +79,6 @@ public class ChunkSystem : ComponentSystem
                 {
                     // Generate a new voxel at position [x,z]
                     GenerateVoxel(ref c, x, z, perlinHeight);
-
                     yield return new WaitForEndOfFrame();
                 }
             }
@@ -88,7 +87,7 @@ public class ChunkSystem : ComponentSystem
         }
 
         // Combine everything to 
-        combineMesh(c.chunk.gameObject, c.chunk.chunkSize);
+        MeshCombiner.combineMeshWithMaterials(c.chunk.gameObject);
 
         yield break;
     }
@@ -160,112 +159,5 @@ public class ChunkSystem : ComponentSystem
 
             c.chunk.voxels[x, z, fillY] = newVoxel.gameObject;
         }
-    }
-
-    // Combines all voxel of this chunk to one mesh while maintaining materials
-    private void combineMesh(GameObject chunk, int chunkSize)
-    {
-        ArrayList materials = new ArrayList();
-        ArrayList combineInstanceArrays = new ArrayList();
-
-        // Get all voxel sides
-        MeshFilter[] meshFilters = chunk.GetComponentsInChildren<MeshFilter>(true);
-
-        foreach (MeshFilter meshFilter in meshFilters)
-        {
-            MeshRenderer meshRenderer = meshFilter.GetComponent<MeshRenderer>();
-
-            if (!meshRenderer || !meshFilter.sharedMesh || meshRenderer.sharedMaterials.Length != meshFilter.sharedMesh.subMeshCount)
-            {
-                continue;
-            }
-
-            // Add meshes to list
-            for (int s = 0; s < meshFilter.sharedMesh.subMeshCount; s++)
-            {
-                int materialArrayIndex = Contains(materials, meshRenderer.sharedMaterials[s].name);
-                if (materialArrayIndex == -1)
-                {
-                    materials.Add(meshRenderer.sharedMaterials[s]);
-                    materialArrayIndex = materials.Count - 1;
-                }
-                combineInstanceArrays.Add(new ArrayList());
-
-                CombineInstance combineInstance = new CombineInstance();
-
-                Vector3 getQuadLocalPositionFromChunk = chunk.transform.InverseTransformPoint(meshFilter.transform.position);
-                combineInstance.transform = Matrix4x4.TRS(getQuadLocalPositionFromChunk, meshFilter.transform.rotation, new Vector3(1, 1, 1));
-
-                combineInstance.subMeshIndex = s;
-                combineInstance.mesh = meshFilter.sharedMesh;
-                (combineInstanceArrays[materialArrayIndex] as ArrayList).Add(combineInstance);
-            }
-        }
-
-        // Create objects for the combined mesh
-        MeshFilter meshFilterCombine = chunk.GetComponent<MeshFilter>();
-        if (meshFilterCombine == null)
-        {
-            meshFilterCombine = chunk.AddComponent<MeshFilter>();
-        }
-
-        MeshRenderer meshRendererCombine = chunk.GetComponent<MeshRenderer>();
-        if (meshRendererCombine == null)
-        {
-            meshRendererCombine = chunk.AddComponent<MeshRenderer>();
-        }
-
-        // Combine meshes by material
-        Mesh[] meshes = new Mesh[materials.Count];
-        CombineInstance[] combineInstances = new CombineInstance[materials.Count];
-
-        for (int m = 0; m < materials.Count; m++)
-        {
-            CombineInstance[] combineInstanceArray = (combineInstanceArrays[m] as ArrayList).ToArray(typeof(CombineInstance)) as CombineInstance[];
-            meshes[m] = new Mesh();
-            meshes[m].CombineMeshes(combineInstanceArray, true, true);
-            meshes[m].RecalculateBounds();
-            meshes[m].RecalculateNormals();
-
-            combineInstances[m] = new CombineInstance();
-            combineInstances[m].mesh = meshes[m];
-            combineInstances[m].subMeshIndex = 0;
-        }
-
-        // Combine material meshes to one mesh
-        meshFilterCombine.sharedMesh = new Mesh();
-        meshFilterCombine.sharedMesh.CombineMeshes(combineInstances, false, false);
-        meshFilterCombine.sharedMesh.RecalculateBounds();
-        meshFilterCombine.sharedMesh.RecalculateNormals();
-        meshFilterCombine.gameObject.AddComponent<MeshCollider>();
-
-        // Cleanup
-        foreach (Mesh oldMesh in meshes)
-        {
-            oldMesh.Clear();
-            GameObject.DestroyImmediate(oldMesh);
-        }
-
-        Material[] materialsArray = materials.ToArray(typeof(Material)) as Material[];
-        meshRendererCombine.materials = materialsArray;
-
-        foreach (MeshFilter meshFilter in meshFilters)
-        {
-            GameObject.DestroyImmediate(meshFilter);
-        }
-    }
-
-    // Helper function for combineMesh
-    private int Contains(ArrayList searchList, string searchName)
-    {
-        for (int i = 0; i < searchList.Count; i++)
-        {
-            if (((Material)searchList[i]).name == searchName)
-            {
-                return i;
-            }
-        }
-
-        return -1;
     }
 }
