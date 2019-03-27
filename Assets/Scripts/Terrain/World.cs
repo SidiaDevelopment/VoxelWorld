@@ -111,9 +111,9 @@ public class WorldSystem : ComponentSystem
         position.z += y * world.chunkSize;
 
         GameObject newChunk = GameObject.Instantiate(world.chunk, position, Quaternion.identity);
-        newChunk.gameObject.GetComponent<Chunk>().chunkSize = world.chunkSize;
-        newChunk.gameObject.GetComponent<Chunk>().needsUpdate = true;
-        newChunk.gameObject.GetComponent<Chunk>().isPlayerChunk = isPlayerChunk;
+        newChunk.gameObject.GetComponent<VolumeChunk>().chunkSize = world.chunkSize;
+        newChunk.gameObject.GetComponent<VolumeChunk>().needsUpdate = true;
+        newChunk.gameObject.GetComponent<VolumeChunk>().isPlayerChunk = isPlayerChunk;
 
         newChunk.transform.parent = world.transform;
 
