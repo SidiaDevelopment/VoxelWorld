@@ -23,6 +23,65 @@ public class VolumeChunk : MonoBehaviour
 
     // Manages if this chunk has already been initialised
     [NonSerialized] public bool initialised = false;
+
+    [NonSerialized] public int[,,] voxelTypes;
+
+    public void RemoveVoxel(int x, int y, int z)
+    {
+        Destroy(voxels[x - 1, y - 1, z - 1]);
+        voxelTypes[x - 1, y - 1, z - 1] = 0;
+        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        needsUpdate = true;
+    }
+
+    public void UpdateVoxelSurroundingVoxels(int x, int y, int z)
+    {
+        if (x < chunkSize - 1)
+        {
+            if (voxels[x + 1, y, z])
+                UpdateVoxel(x + 1, y, z, ref voxels[x + 1, y, z]);
+        }
+
+        if (x > 0)
+        {
+            if (voxels[x - 1, y, z])
+                UpdateVoxel(x - 1, y, z, ref voxels[x - 1, y, z]);
+        }
+
+        if (y < 254)
+        {
+            if (voxels[x, y + 1, z])
+                UpdateVoxel(x, y + 1, z, ref voxels[x, y + 1, z]);
+        }
+
+        if (y > 0)
+        {
+            if (voxels[x, y - 1, z])
+                UpdateVoxel(x, y - 1, z, ref voxels[x, y - 1, z]);
+        }
+
+        if (z < chunkSize - 1)
+        {
+            if (voxels[x, y, z + 1])
+                UpdateVoxel(x, y, z + 1, ref voxels[x, y, z + 1]);
+        }
+
+        if (z > 0)
+        {
+            if (voxels[x, y, z - 1])
+                UpdateVoxel(x, y, z - 1, ref voxels[x, y, z - 1]);
+        }
+    }
+
+    public void UpdateVoxel(int x, int y, int z, ref GameObject voxel)
+    {
+        voxel.transform.Find("Top").gameObject.SetActive(voxelTypes[x, y + 1, z] != 1);
+        voxel.transform.Find("Bottom").gameObject.SetActive(!(y > 0 && voxelTypes[x, y - 1, z] == 1));
+        voxel.transform.Find("Front").gameObject.SetActive(!(x < chunkSize - 1 && voxelTypes[x + 1, y, z] == 1));
+        voxel.transform.Find("Back").gameObject.SetActive(!(x > 0 && voxelTypes[x - 1, y, z] == 1));
+        voxel.transform.Find("Right").gameObject.SetActive(!(z < chunkSize - 1 && voxelTypes[x, y, z + 1] == 1));
+        voxel.transform.Find("Left").gameObject.SetActive(!(z > 0 && voxelTypes[x, y, z - 1] == 1));
+    }
 }
 
 // This System manages all chunks
@@ -68,10 +127,10 @@ public class VolumeChunkSystem : ComponentSystem
         if (!c.chunk.initialised)
         {
             // Initialize voxels array
-            c.chunk.voxels = new GameObject[c.chunk.chunkSize, c.chunk.chunkSize, 256];
+            c.chunk.voxels = new GameObject[c.chunk.chunkSize, 256, c.chunk.chunkSize];
 
             // Get perlin noise heights
-            int[,,] perlinHeight = GenerateTerrainHeight(c);
+            c.chunk.voxelTypes = GenerateTerrainHeight(c);
 
             for (int x = 0; x < c.chunk.chunkSize; x++)
             {
@@ -79,19 +138,18 @@ public class VolumeChunkSystem : ComponentSystem
                 {
                     for (int y = 0; y < 256; y++)
                     {
-                        // Generate a new voxel at position [x,z]
-                        GenerateVoxel(ref c, x, z, y, perlinHeight);
+                        // Generate a new voxel at position [x,y, z]
+                        GenerateVoxel(ref c, x, y, z);
                         
                     }
-                    
+                    yield return new WaitForEndOfFrame();
+
                 }
-                yield return new WaitForEndOfFrame();
             }
 
             c.chunk.initialised = true;
         }
 
-        // Combine everything to 
         MeshCombiner.combineMeshWithMaterials(c.chunk.gameObject);
 
         yield break;
@@ -101,20 +159,20 @@ public class VolumeChunkSystem : ComponentSystem
     // Generates with 1 unit overhead to each side to account for the height gap fill algorithm on the border of chunks
     private int[,,] GenerateTerrainHeight(ChunkArchetype c)
     {
-        int[,,] voxelTypes = new int[c.chunk.chunkSize, c.chunk.chunkSize, 256];
+        int[,,] voxelTypes = new int[c.chunk.chunkSize, 256, c.chunk.chunkSize];
 
         for (int x = 0; x < c.chunk.chunkSize; x++)
         {
-            for (int y = 0; y < c.chunk.chunkSize; y++)
+            for (int z = 0; z < c.chunk.chunkSize; z++)
             {
                 Vector3 position = c.transform.position;
 
                 // Add current voxel position, the subtraction accounts for the overhead we generate
                 position.x += x;
-                position.z += y;
+                position.z += z;
 
-                int baseZ = Mathf.FloorToInt(Mathf.PerlinNoise((1000000f + position.x) / frq, (seed + 1000000f + position.z) / frq) * amp + 10);
-                for (int z = 0; z < baseZ; z++)
+                int baseY = Mathf.FloorToInt(Mathf.PerlinNoise((1000000f + position.x) / frq, (seed + 1000000f + position.z) / frq) * amp + 10);
+                for (int y = 0; y < baseY; y++)
                 {
                     // Generate perlin noise height
                     voxelTypes[x, y, z] = 1;
@@ -126,91 +184,31 @@ public class VolumeChunkSystem : ComponentSystem
     }
 
     // Generate a new voxel and fill the height gap with more voxels
-    private void GenerateVoxel(ref ChunkArchetype c, int x, int z, int y, int[,,] voxelTypes)
+    private void GenerateVoxel(ref ChunkArchetype c, int x, int y, int z)
     {
         // Take chunk position as reference
         Vector3 position = c.transform.position;
 
-        position.x += x;
-        position.z += z;
+        position.x += x + 0.5f;
+        position.z += z + 0.5f;
 
-        // Save our old position
-        float oldPositionY = position.y;
-
-        // Get how many blocks high we have to fill
-
-        if (voxelTypes[x, z, y] == 1)
+        if (c.chunk.voxelTypes[x, y, z] == 1)
         {
-
-            if (!NeedsRender(voxelTypes, x, z, y, c.chunk.chunkSize))
-            {
-                return;
-            }
-
-            position.y = oldPositionY + y;
+            position.y += + y + 0.5f;
+            c.chunk.voxel.gameObject.SetActive(false);
             GameObject newVoxel = GameObject.Instantiate(c.chunk.voxel, position, Quaternion.identity);
             newVoxel.transform.parent = c.transform;
 
-            RemoveInvisibleFaces(voxelTypes, x, z, y, ref newVoxel, c.chunk.chunkSize);
+            c.chunk.UpdateVoxel(x, y, z, ref newVoxel);
 
             //newVoxel.SetActive(false);
 
-            if (c.chunk.voxels[x, z, y])
+            if (c.chunk.voxels[x, y, z])
             {
-                GameObject.Destroy(c.chunk.voxels[x, z, y]);
+                GameObject.Destroy(c.chunk.voxels[x, y, z]);
             }
 
-            c.chunk.voxels[x, z, y] = newVoxel.gameObject;
-        }
-    }
-
-    private bool NeedsRender(int[,,] voxelTypes, int perlinX, int perlinZ, int perlinY, int chunkSize)
-    {
-        if (
-            voxelTypes[perlinX, perlinZ, perlinY + 1] == 1                                  // Top
-            && perlinY > 0 && voxelTypes[perlinX, perlinZ, perlinY - 1] == 1                // Bottom
-            && perlinX < chunkSize - 1 && voxelTypes[perlinX + 1, perlinZ, perlinY] == 1    // Front
-            && perlinX > 0 && voxelTypes[perlinX - 1, perlinZ, perlinY] == 1                // Back
-            && perlinZ < chunkSize - 1 && voxelTypes[perlinX, perlinZ + 1, perlinY] == 1    // Right
-            && perlinZ > 0 && voxelTypes[perlinX, perlinZ - 1, perlinY] == 1)               // Left
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void RemoveInvisibleFaces(int[,,] voxelTypes, int x, int z, int y, ref GameObject newVoxel, int chunkSize)
-    {
-        if (voxelTypes[x, z, y + 1] == 1)
-        {
-            newVoxel.transform.Find("Top").gameObject.SetActive(false);
-        }
-
-        if (y > 0 && voxelTypes[x, z, y - 1] == 1)
-        {
-
-            newVoxel.transform.Find("Bottom").gameObject.SetActive(false);
-        }
-
-        if (x < chunkSize - 1 && voxelTypes[x + 1, z, y] == 1)
-        {
-            newVoxel.transform.Find("Front").gameObject.SetActive(false);
-        }
-
-        if (x > 0 && voxelTypes[x - 1, z, y] == 1)
-        {
-            newVoxel.transform.Find("Back").gameObject.SetActive(false);
-        }
-
-        if (z < chunkSize - 1 && voxelTypes[x, z + 1, y] == 1)
-        {
-            newVoxel.transform.Find("Right").gameObject.SetActive(false);
-        }
-
-        if (z > 0 && voxelTypes[x, z - 1, y] == 1)
-        {
-            newVoxel.transform.Find("Left").gameObject.SetActive(false);
+            c.chunk.voxels[x, y, z] = newVoxel.gameObject;
         }
     }
 }

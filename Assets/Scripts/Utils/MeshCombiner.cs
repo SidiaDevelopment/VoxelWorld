@@ -9,39 +9,51 @@ public class MeshCombiner
         ArrayList combineInstanceArrays = new ArrayList();
 
         // Get all voxel sides
-        MeshFilter[] meshFilters = parent.GetComponentsInChildren<MeshFilter>();
+        ArrayList voxels = new ArrayList();
 
-        foreach (MeshFilter meshFilter in meshFilters)
+        foreach (Transform voxel in parent.transform)
         {
-            MeshRenderer meshRenderer = meshFilter.GetComponent<MeshRenderer>();
-            meshRenderer.gameObject.SetActive(false);
-
-            if (!meshRenderer || !meshFilter.sharedMesh || meshRenderer.sharedMaterials.Length != meshFilter.sharedMesh.subMeshCount)
+            foreach (Transform child in voxel.transform)
             {
-                continue;
-            }
-
-            // Add meshes to list
-            for (int s = 0; s < meshFilter.sharedMesh.subMeshCount; s++)
-            {
-                int materialArrayIndex = Contains(materials, meshRenderer.sharedMaterials[s].name);
-                if (materialArrayIndex == -1)
+                if (!child.gameObject.activeSelf)
                 {
-                    materials.Add(meshRenderer.sharedMaterials[s]);
-                    materialArrayIndex = materials.Count - 1;
+                    continue;
                 }
-                combineInstanceArrays.Add(new ArrayList());
 
-                CombineInstance combineInstance = new CombineInstance();
+                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
 
-                Vector3 getQuadLocalPositionFromparent = parent.transform.InverseTransformPoint(meshFilter.transform.position);
-                combineInstance.transform = Matrix4x4.TRS(getQuadLocalPositionFromparent, meshFilter.transform.rotation, new Vector3(1, 1, 1));
+                MeshRenderer meshRenderer = meshFilter.GetComponent<MeshRenderer>();
+                //meshRenderer.gameObject.SetActive(false);
 
-                combineInstance.subMeshIndex = s;
-                combineInstance.mesh = meshFilter.sharedMesh;
-                (combineInstanceArrays[materialArrayIndex] as ArrayList).Add(combineInstance);
+                if (!meshRenderer || !meshFilter.sharedMesh || meshRenderer.sharedMaterials.Length != meshFilter.sharedMesh.subMeshCount)
+                {
+                    continue;
+                }
+
+                // Add meshes to list
+                for (int s = 0; s < meshFilter.sharedMesh.subMeshCount; s++)
+                {
+                    int materialArrayIndex = Contains(materials, meshRenderer.sharedMaterials[s].name);
+                    if (materialArrayIndex == -1)
+                    {
+                        materials.Add(meshRenderer.sharedMaterials[s]);
+                        materialArrayIndex = materials.Count - 1;
+                    }
+                    combineInstanceArrays.Add(new ArrayList());
+
+                    CombineInstance combineInstance = new CombineInstance();
+
+                    Vector3 getQuadLocalPositionFromParent = parent.transform.InverseTransformPoint(meshFilter.transform.position);
+                    combineInstance.transform = Matrix4x4.TRS(getQuadLocalPositionFromParent, meshFilter.transform.rotation, new Vector3(1, 1, 1));
+
+                    combineInstance.subMeshIndex = s;
+                    combineInstance.mesh = meshFilter.sharedMesh;
+                    (combineInstanceArrays[materialArrayIndex] as ArrayList).Add(combineInstance);
+                }
             }
         }
+
+
 
         // Create objects for the combined mesh
         MeshFilter meshFilterCombine = parent.GetComponent<MeshFilter>();
@@ -78,7 +90,14 @@ public class MeshCombiner
         meshFilterCombine.sharedMesh.CombineMeshes(combineInstances, false, false);
         meshFilterCombine.sharedMesh.RecalculateBounds();
         meshFilterCombine.sharedMesh.RecalculateNormals();
-        meshFilterCombine.gameObject.AddComponent<MeshCollider>();
+
+        MeshCollider meshCollider = meshFilterCombine.gameObject.GetComponent<MeshCollider>();
+        if (!meshCollider)
+        {
+            meshCollider = meshFilterCombine.gameObject.AddComponent<MeshCollider>();
+        }
+
+        meshCollider.sharedMesh = meshFilterCombine.sharedMesh;
 
         // Cleanup
         foreach (Mesh oldMesh in meshes)
@@ -90,7 +109,7 @@ public class MeshCombiner
         Material[] materialsArray = materials.ToArray(typeof(Material)) as Material[];
         meshRendererCombine.materials = materialsArray;
 
-        foreach (MeshFilter meshFilter in meshFilters)
+        foreach (GameObject meshFilter in voxels)
         {
             GameObject.DestroyImmediate(meshFilter);
         }
