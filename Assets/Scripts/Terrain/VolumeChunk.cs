@@ -34,6 +34,14 @@ public class VolumeChunk : MonoBehaviour
         needsUpdate = true;
     }
 
+    public void CreateVoxel(int x, int y, int z)
+    {
+        voxelTypes[x - 1, y - 1, z - 1] = 1;
+        GenerateVoxel(x - 1, y - 1, z - 1);
+        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        needsUpdate = true;
+    }
+
     public void UpdateVoxelSurroundingVoxels(int x, int y, int z)
     {
         if (x < chunkSize - 1)
@@ -81,6 +89,32 @@ public class VolumeChunk : MonoBehaviour
         voxel.transform.Find("Back").gameObject.SetActive(!(x > 0 && voxelTypes[x - 1, y, z] == 1));
         voxel.transform.Find("Right").gameObject.SetActive(!(z < chunkSize - 1 && voxelTypes[x, y, z + 1] == 1));
         voxel.transform.Find("Left").gameObject.SetActive(!(z > 0 && voxelTypes[x, y, z - 1] == 1));
+    }
+
+    // Generate a new voxel and fill the height gap with more voxels
+    public void GenerateVoxel(int x, int y, int z)
+    {
+        if (voxelTypes[x, y, z] == 1)
+        {
+            // Take chunk position as reference
+            Vector3 position = transform.position;
+
+            position.x += x + 0.5f;
+            position.z += z + 0.5f;
+            position.y += +y + 0.5f;
+            voxel.gameObject.SetActive(false);
+            GameObject newVoxel = GameObject.Instantiate(voxel, position, Quaternion.identity);
+            newVoxel.transform.parent = transform;
+
+            UpdateVoxel(x, y, z, ref newVoxel);
+
+            if (voxels[x, y, z])
+            {
+                GameObject.Destroy(voxels[x, y, z]);
+            }
+
+            voxels[x, y, z] = newVoxel.gameObject;
+        }
     }
 }
 
@@ -139,7 +173,7 @@ public class VolumeChunkSystem : ComponentSystem
                     for (int y = 0; y < 256; y++)
                     {
                         // Generate a new voxel at position [x,y, z]
-                        GenerateVoxel(ref c, x, y, z);
+                        c.chunk.GenerateVoxel(x, y, z);
                         
                     }
                     yield return new WaitForEndOfFrame();
@@ -181,34 +215,5 @@ public class VolumeChunkSystem : ComponentSystem
         }
 
         return voxelTypes;
-    }
-
-    // Generate a new voxel and fill the height gap with more voxels
-    private void GenerateVoxel(ref ChunkArchetype c, int x, int y, int z)
-    {
-        // Take chunk position as reference
-        Vector3 position = c.transform.position;
-
-        position.x += x + 0.5f;
-        position.z += z + 0.5f;
-
-        if (c.chunk.voxelTypes[x, y, z] == 1)
-        {
-            position.y += + y + 0.5f;
-            c.chunk.voxel.gameObject.SetActive(false);
-            GameObject newVoxel = GameObject.Instantiate(c.chunk.voxel, position, Quaternion.identity);
-            newVoxel.transform.parent = c.transform;
-
-            c.chunk.UpdateVoxel(x, y, z, ref newVoxel);
-
-            //newVoxel.SetActive(false);
-
-            if (c.chunk.voxels[x, y, z])
-            {
-                GameObject.Destroy(c.chunk.voxels[x, y, z]);
-            }
-
-            c.chunk.voxels[x, y, z] = newVoxel.gameObject;
-        }
     }
 }

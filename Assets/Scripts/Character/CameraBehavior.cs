@@ -98,14 +98,36 @@ public class CameraBehavior : MonoBehaviour
                     float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2);
                     float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2);
                     float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2);
-                    Debug.Log(localPosition.ToString());
+
                     localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
                     localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
                     localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
-                    Debug.Log("x: " + hit.normal.x.ToString());
-                    Debug.Log("y: " + hit.normal.y.ToString());
-                    Debug.Log("z: " + hit.normal.z.ToString());
+
                     hit.transform.GetComponent<VolumeChunk>().RemoveVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
+                }
+            }
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            int layerMask = 1 << 9;
+            layerMask = ~layerMask;
+            RaycastHit hit;
+            if (Physics.Raycast(camera.position, camera.TransformDirection(Vector3.forward), out hit, interactionDistance, layerMask))
+            {
+                if (hit.collider.tag.Equals("Chunk"))
+                {
+
+                    Vector3 localPosition = hit.transform.InverseTransformPoint(hit.point);
+                    float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2) + hit.normal.x;
+                    float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2) + hit.normal.y;
+                    float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2) + hit.normal.z;
+
+                    localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
+                    localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
+                    localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
+
+                    hit.transform.GetComponent<VolumeChunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }
             }
         }
