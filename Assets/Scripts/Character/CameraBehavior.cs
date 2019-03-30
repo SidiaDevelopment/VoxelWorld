@@ -95,13 +95,10 @@ public class CameraBehavior : MonoBehaviour
                 {
 
                     Vector3 localPosition = hit.transform.InverseTransformPoint(hit.point);
-                    float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2);
-                    float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2);
-                    float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2);
 
-                    localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
-                    localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
-                    localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
+                    localPosition.x = Mathf.FloorToInt(localPosition.x - (hit.normal.x / 2));
+                    localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2));
+                    localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2));
 
                     hit.transform.GetComponent<VolumeChunk>().RemoveVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }
@@ -119,13 +116,10 @@ public class CameraBehavior : MonoBehaviour
                 {
 
                     Vector3 localPosition = hit.transform.InverseTransformPoint(hit.point);
-                    float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2) + hit.normal.x;
-                    float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2) + hit.normal.y;
-                    float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2) + hit.normal.z;
 
-                    localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
-                    localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
-                    localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
+                    localPosition.x = Mathf.FloorToInt(localPosition.x - (hit.normal.x / 2)) + hit.normal.x;
+                    localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2)) + hit.normal.y;
+                    localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2)) + hit.normal.z;
 
                     hit.transform.GetComponent<VolumeChunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }

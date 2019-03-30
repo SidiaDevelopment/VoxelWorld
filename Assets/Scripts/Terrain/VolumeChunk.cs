@@ -28,17 +28,17 @@ public class VolumeChunk : MonoBehaviour
 
     public void RemoveVoxel(int x, int y, int z)
     {
-        Destroy(voxels[x - 1, y - 1, z - 1]);
-        voxelTypes[x - 1, y - 1, z - 1] = 0;
-        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        Destroy(voxels[x, y, z]);
+        voxelTypes[x, y, z] = 0;
+        UpdateVoxelSurroundingVoxels(x, y, z);
         needsUpdate = true;
     }
 
     public void CreateVoxel(int x, int y, int z)
     {
-        voxelTypes[x - 1, y - 1, z - 1] = 1;
-        GenerateVoxel(x - 1, y - 1, z - 1);
-        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        voxelTypes[x, y, z] = 1;
+        GenerateVoxel(x, y, z);
+        UpdateVoxelSurroundingVoxels(x, y, z);
         needsUpdate = true;
     }
 
