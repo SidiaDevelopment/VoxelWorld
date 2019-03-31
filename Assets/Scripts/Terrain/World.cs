@@ -23,6 +23,11 @@ public class World : MonoBehaviour
 
     // Is the world initialised
     [NonSerialized] public bool initialised = false;
+
+    public GameObject GetChunk(int x, int y)
+    {
+        return chunks[x, y];
+    }
 }
 
 // Manages our world, potential all worlds
@@ -113,7 +118,8 @@ public class WorldSystem : ComponentSystem
         GameObject newChunk = GameObject.Instantiate(world.chunk, position, Quaternion.identity);
         newChunk.gameObject.GetComponent<VolumeChunk>().chunkSize = world.chunkSize;
         newChunk.gameObject.GetComponent<VolumeChunk>().needsUpdate = true;
-        newChunk.gameObject.GetComponent<VolumeChunk>().isPlayerChunk = isPlayerChunk;
+        newChunk.gameObject.GetComponent<VolumeChunk>().x = x;
+        newChunk.gameObject.GetComponent<VolumeChunk>().y = z;
 
         newChunk.transform.parent = world.transform;
 
