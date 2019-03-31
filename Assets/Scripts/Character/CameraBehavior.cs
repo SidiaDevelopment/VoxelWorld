@@ -9,8 +9,9 @@ public class CameraBehavior : MonoBehaviour
 
     [SerializeField] public float interactionDistance = 6f;
     [SerializeField] public Texture2D crosshairImage;
+    [SerializeField] public string colliderTag = "Chunk";
 
-    [SerializeField] GameObject worldBuilder;
+    [SerializeField] public GameObject world;
 
     void Start()
     {
@@ -74,8 +75,6 @@ public class CameraBehavior : MonoBehaviour
             cameraRotation.x = Mathf.Min(cameraRotation.x - rotationY, maximumX);
         }
 
-        playerRotation.z = 0;
-
         camera.localRotation = Quaternion.Euler(cameraRotation);
         transform.localRotation = Quaternion.Euler(playerRotation);
     }
@@ -84,48 +83,65 @@ public class CameraBehavior : MonoBehaviour
     {
         Transform camera = transform.Find("MainCamera");
 
+        // Don't raycast player model
+        int layerMask = 1 << 9;
+        layerMask = ~layerMask;
+
+        // Left mouse button down
         if (Input.GetMouseButtonDown(0))
         {
-            int layerMask = 1 << 9;
-            layerMask = ~layerMask;
             RaycastHit hit;
             if (Physics.Raycast(camera.position, camera.TransformDirection(Vector3.forward), out hit, interactionDistance, layerMask))
             {
-                if (hit.collider.tag.Equals("Chunk"))
+                if (hit.collider.tag.Equals(colliderTag))
                 {
-
                     Vector3 localPosition = hit.transform.InverseTransformPoint(hit.point);
-                    float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2);
-                    float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2);
-                    float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2);
 
-                    localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
-                    localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
-                    localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
+                    localPosition.x = Mathf.FloorToInt(localPosition.x - (hit.normal.x / 2));
+                    localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2));
+                    localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2));
 
                     hit.transform.GetComponent<VolumeChunk>().RemoveVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }
             }
         }
 
+        // Right mouse button down
         if (Input.GetMouseButtonDown(1))
         {
-            int layerMask = 1 << 9;
-            layerMask = ~layerMask;
             RaycastHit hit;
             if (Physics.Raycast(camera.position, camera.TransformDirection(Vector3.forward), out hit, interactionDistance, layerMask))
             {
-                if (hit.collider.tag.Equals("Chunk"))
+                if (hit.collider.tag.Equals(colliderTag))
                 {
-
                     Vector3 localPosition = hit.transform.InverseTransformPoint(hit.point);
-                    float moveX = Mathf.FloorToInt((hit.normal.x - 1) / -2) + hit.normal.x;
-                    float moveY = Mathf.FloorToInt((hit.normal.y - 1) / -2) + hit.normal.y;
-                    float moveZ = Mathf.FloorToInt((hit.normal.z - 1) / -2) + hit.normal.z;
 
-                    localPosition.x = Mathf.CeilToInt(localPosition.x) + moveX;
-                    localPosition.y = Mathf.CeilToInt(localPosition.y) + moveY;
-                    localPosition.z = Mathf.CeilToInt(localPosition.z) + moveZ;
+                    localPosition.x = Mathf.FloorToInt(localPosition.x - (hit.normal.x / 2)) + hit.normal.x;
+                    localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2)) + hit.normal.y;
+                    localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2)) + hit.normal.z;
+
+                    VolumeChunk currentChunk = hit.transform.GetComponent<VolumeChunk>();
+                    World currentWorld = world.GetComponent<World>();
+                    if (localPosition.x == 16)
+                    {
+                        currentWorld.GetChunk(currentChunk.x + 1, currentChunk.y).GetComponent<VolumeChunk>().CreateVoxel(0, (int)localPosition.y, (int)localPosition.z);
+                        return;
+                    }
+                    if (localPosition.x == -1)
+                    {
+                        currentWorld.GetChunk(currentChunk.x - 1, currentChunk.y).GetComponent<VolumeChunk>().CreateVoxel(15, (int)localPosition.y, (int)localPosition.z);
+                        return;
+                    }
+                    if (localPosition.z == 16)
+                    {
+                        currentWorld.GetChunk(currentChunk.x, currentChunk.y + 1).GetComponent<VolumeChunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, 0);
+                        return;
+                    }
+                    if (localPosition.z == -1)
+                    {
+                        currentWorld.GetChunk(currentChunk.x, currentChunk.y - 1).GetComponent<VolumeChunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, 15);
+                        return;
+                    }
 
                     hit.transform.GetComponent<VolumeChunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }

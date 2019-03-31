@@ -18,27 +18,27 @@ public class VolumeChunk : MonoBehaviour
     // An array of all generated voxels
     [NonSerialized] public GameObject[,,] voxels;
 
-    // Is set to true if player is currently in this chunk
-    [NonSerialized] public bool isPlayerChunk = false;
-
     // Manages if this chunk has already been initialised
     [NonSerialized] public bool initialised = false;
 
     [NonSerialized] public int[,,] voxelTypes;
 
+    [NonSerialized] public int x;
+    [NonSerialized] public int y;
+
     public void RemoveVoxel(int x, int y, int z)
     {
-        Destroy(voxels[x - 1, y - 1, z - 1]);
-        voxelTypes[x - 1, y - 1, z - 1] = 0;
-        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        Destroy(voxels[x, y, z]);
+        voxelTypes[x, y, z] = 0;
+        UpdateVoxelSurroundingVoxels(x, y, z);
         needsUpdate = true;
     }
 
     public void CreateVoxel(int x, int y, int z)
     {
-        voxelTypes[x - 1, y - 1, z - 1] = 1;
-        GenerateVoxel(x - 1, y - 1, z - 1);
-        UpdateVoxelSurroundingVoxels(x - 1, y - 1, z - 1);
+        voxelTypes[x, y, z] = 1;
+        GenerateVoxel(x, y, z);
+        UpdateVoxelSurroundingVoxels(x, y, z);
         needsUpdate = true;
     }
 
@@ -206,6 +206,7 @@ public class VolumeChunkSystem : ComponentSystem
                 position.z += z;
 
                 int baseY = Mathf.FloorToInt(Mathf.PerlinNoise((1000000f + position.x) / frq, (seed + 1000000f + position.z) / frq) * amp + 10);
+
                 for (int y = 0; y < baseY; y++)
                 {
                     // Generate perlin noise height
