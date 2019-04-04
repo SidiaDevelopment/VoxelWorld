@@ -83,7 +83,7 @@ public class CameraBehavior : MonoBehaviour
     {
         Transform camera = transform.GetComponentInChildren<Camera>().transform;
 
-        int layerMask = 1 << 9;
+        int layerMask = 1 << 8;
         layerMask = ~layerMask;
 
         if (Input.GetMouseButtonDown(0))
@@ -120,24 +120,24 @@ public class CameraBehavior : MonoBehaviour
 
                     VoxelChunk currentChunk = hit.transform.GetComponent<VoxelChunk>();
                     VoxelWorld currentWorld = world.GetComponent<VoxelWorld>();
-                    if (localPosition.x == currentWorld.chunkSize)
+                    if (localPosition.x == currentWorld.ChunkSize)
                     {
-                        currentWorld.GetChunk(currentChunk.PositionX + 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(0, (int)localPosition.y, (int)localPosition.z);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX + 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(0, (int)localPosition.y, (int)localPosition.z);
                         return;
                     }
                     if (localPosition.x == -1)
                     {
-                        currentWorld.GetChunk(currentChunk.PositionX - 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(currentWorld.chunkSize - 1, (int)localPosition.y, (int)localPosition.z);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX - 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(currentWorld.ChunkSize - 1, (int)localPosition.y, (int)localPosition.z);
                         return;
                     }
-                    if (localPosition.z == currentWorld.chunkSize)
+                    if (localPosition.z == currentWorld.ChunkSize)
                     {
-                        currentWorld.GetChunk(currentChunk.PositionX, currentChunk.PositionZ + 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, 0);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX, currentChunk.PositionZ + 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, 0);
                         return;
                     }
                     if (localPosition.z == -1)
                     {
-                        currentWorld.GetChunk(currentChunk.PositionX, currentChunk.PositionZ - 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, currentWorld.chunkSize - 1);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX, currentChunk.PositionZ - 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, currentWorld.ChunkSize - 1);
                         return;
                     }
 
