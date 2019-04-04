@@ -118,6 +118,7 @@ public class VoxelWorldSystem : ComponentSystem
         GameObject newChunk = GameObject.Instantiate(world.chunk, position, Quaternion.identity);
         newChunk.gameObject.GetComponent<VoxelChunk>().ChunkSize = world.chunkSize;
         newChunk.gameObject.GetComponent<VoxelChunk>().NeedsUpdate = true;
+        newChunk.gameObject.GetComponent<VoxelChunk>().VoxelWorldInstance = world;
         newChunk.gameObject.GetComponent<VoxelChunk>().ChunkHeight = 256;
         newChunk.gameObject.GetComponent<VoxelChunk>().PositionX = x;
         newChunk.gameObject.GetComponent<VoxelChunk>().PositionZ = z;

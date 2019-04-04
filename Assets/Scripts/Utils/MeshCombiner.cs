@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class MeshCombiner
 {
-    public static void combineMeshWithMaterials(GameObject parent)
+    public static void combineMeshWithMaterials(GameObject[,,] existingVoxels, GameObject parent)
     {
         ArrayList materials = new ArrayList();
         ArrayList combineInstanceArrays = new ArrayList();
@@ -11,8 +11,9 @@ public class MeshCombiner
         // Get all voxel sides
         ArrayList voxels = new ArrayList();
 
-        foreach (Transform voxel in parent.transform)
+        foreach (GameObject voxel in existingVoxels)
         {
+            if (!voxel) continue;
             foreach (Transform child in voxel.transform)
             {
                 if (!child.gameObject.activeSelf)
