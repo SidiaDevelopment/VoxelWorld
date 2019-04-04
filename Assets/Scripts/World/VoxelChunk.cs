@@ -5,12 +5,14 @@ using UnityEngine;
 public enum BlockTypes : int
 {
     BLOCK_AIR = 0,
-    BLOCK_GRASS
+    BLOCK_GRASS,
+    BLOCK_DIRT,
+    BLOCK_STONE
 }
 
 public class VoxelChunk : MonoBehaviour
 {
-    [SerializeField] public GameObject DefaultVoxel;
+    [SerializeField] public GameObject[] VoxelPrefabs;
     [SerializeField] public bool NeedsUpdate = false;
     [SerializeField] public bool IsInitialised = false;
     [SerializeField] public bool IsInitialising = false;
@@ -168,7 +170,7 @@ public class VoxelChunk : MonoBehaviour
         BlockTypes[,,] voxelIndex = new BlockTypes[ChunkSize, ChunkHeight, ChunkSize];
         Vector3 position = transform.position;
         float positionX, positionZ;
-        int maxY;
+        int dirtMaxY, stoneMaxY;
 
         for (int x = 0; x < ChunkSize; x++)
         {
@@ -177,16 +179,31 @@ public class VoxelChunk : MonoBehaviour
                 positionX = position.x + x;
                 positionZ = position.z + z;
 
-                maxY = Mathf.FloorToInt(
+                stoneMaxY = Mathf.FloorToInt(
+                    Mathf.PerlinNoise(
+                        (PerlinSeed * 2 + positionX) / PerlinFrequency,
+                        (PerlinSeed + positionZ) / PerlinFrequency
+                    ) * PerlinAmplifier
+                ) + 5;
+
+                dirtMaxY = Mathf.FloorToInt(
                     Mathf.PerlinNoise(
                         (PerlinSeed + positionX) / PerlinFrequency,
                         (PerlinSeed + positionZ) / PerlinFrequency
                     ) * PerlinAmplifier
-                );
+                ) + 10;
 
                 for (int y = 0; y < ChunkHeight; y++)
                 {
-                    if (y <= maxY)
+                    if (y < stoneMaxY)
+                    {
+                        voxelIndex[x, y, z] = BlockTypes.BLOCK_STONE;
+                    }
+                    else if (y < dirtMaxY)
+                    {
+                        voxelIndex[x, y, z] = BlockTypes.BLOCK_DIRT;
+                    }
+                    else if (y == dirtMaxY)
                     {
                         voxelIndex[x, y, z] = BlockTypes.BLOCK_GRASS;
                     }
@@ -218,7 +235,7 @@ public class VoxelChunk : MonoBehaviour
             }
             else
             {
-                VoxelInstances[x, y, z] = CreateVoxel(x, y, z);
+                VoxelInstances[x, y, z] = CreateVoxel(x, y, z, VoxelIndex[x, y, z]);
                 CurrentVoxels[x, y, z] = VoxelIndex[x, y, z];
                 UpdateVoxelFaces(x, y, z);
             }
@@ -230,7 +247,7 @@ public class VoxelChunk : MonoBehaviour
         }
     }
 
-    private GameObject CreateVoxel(int x, int y, int z)
+    private GameObject CreateVoxel(int x, int y, int z, BlockTypes type)
     {
         Vector3 position = transform.position;
 
@@ -238,7 +255,7 @@ public class VoxelChunk : MonoBehaviour
         position.y += y + 0.5f;
         position.z += z + 0.5f;
 
-        GameObject instance = GameObject.Instantiate(DefaultVoxel, position, Quaternion.identity);
+        GameObject instance = GameObject.Instantiate(VoxelPrefabs[(int)type - 1], position, Quaternion.identity);
         instance.name = $"Voxel {x}_{y}_{z}";
         instance.transform.parent = transform;
         instance.SetActive(false);
