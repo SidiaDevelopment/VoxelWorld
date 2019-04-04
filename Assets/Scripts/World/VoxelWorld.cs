@@ -1,149 +1,149 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using Unity.Entities;
 
-// The main world generating all chunks
 public class VoxelWorld : MonoBehaviour
 {
-    // Chunks that are generated
-    public GameObject chunk;
+    [SerializeField] public GameObject VoxelChunkPrefab;
+    [SerializeField] public int RenderDistance = 5;
+    [SerializeField] public int MaxChunks = 255;
+    [SerializeField] public int ChunkSize = 16;
+    [SerializeField] public int ChunkHeight = 256;
 
-    // How far can a player see
-    public int renderDistance = 5;
+    [SerializeField] public bool IsInitialised = false;
+    [SerializeField] public bool IsInitialising = false;
 
-    // How far do we generate chunks
-    public int maxChunks = 3;
+    [SerializeField] public Vector2Int CurrentPlayerChunk;
+    [SerializeField] public Vector2Int LastPlayerChunk;
 
-    // How big is a chunk
-    public int chunkSize = 16;
+    [NonSerialized] public GameObject[,] ChunkCache;
 
-    // Holding all generated chunks
-    [NonSerialized] public GameObject[,] chunks;
-
-    // Is the world initialised
-    [NonSerialized] public bool initialised = false;
-
-    public GameObject GetChunk(int x, int y)
+    void Update()
     {
-        return chunks[x, y];
-    }
-}
-
-// Manages our world, potential all worlds
-public class VoxelWorldSystem : ComponentSystem
-{
-    // World Archetype
-    struct WorldArchetype
-    {
-        public VoxelWorld world;
-        public Transform transform;
-    }
-
-    protected override void OnUpdate()
-    {
-        foreach (var w in GetEntities<WorldArchetype>())
+        if (!IsInitialised && !IsInitialising)
         {
-            if (!w.world.initialised)
-            {
-                w.world.chunks = new GameObject[w.world.maxChunks, w.world.maxChunks];
-                w.world.initialised = true;
-            }
-
-            // Get current chunk
-            Vector2Int playerChunk = GetActiveChunk(w.world.maxChunks, w.world.chunkSize);
-
-            // Generate all relevant chunks
-            IEnumerator coroutine = ChunkGenerator(w, playerChunk);
-            w.world.StartCoroutine(coroutine);
-        }
-    }
-
-    // Generates all relevant chunks
-    IEnumerator ChunkGenerator(WorldArchetype w, Vector2Int playerChunk)
-    {
-        for (int x = 0; x < w.world.maxChunks; x++)
-        {
-            for (int z = 0; z < w.world.maxChunks; z++)
-            {
-                // Is current chunk coordinate in renderDistance of player
-                bool isInX = playerChunk.x - w.world.renderDistance < x && playerChunk.x + w.world.renderDistance > x;
-                bool isInY = playerChunk.y - w.world.renderDistance < z && playerChunk.y + w.world.renderDistance > z;
-
-                // Is the player currently in this chunk
-                bool isPlayerChunk = (playerChunk.x == x && playerChunk.y == z);
-
-                if (!isInX || !isInY)
-                {
-                    // Chunk out of range
-                    if (w.world.chunks[x, z])
-                    {
-                        w.world.chunks[x, z].SetActive(false);
-                    }
-
-                    continue;
-                }
-
-                if (!w.world.chunks[x, z])
-                {
-                    // Chunk in range but never generated
-                    w.world.chunks[x, z] = GenerateChunk(x, z, w.world, w.transform, isPlayerChunk);
-                }
-                else
-                {
-                    // Chunk in range but cached
-                    if (!w.world.chunks[x, z].activeSelf)
-                    {
-                        w.world.chunks[x, z].SetActive(true);
-                    }
-                }
-            }
+            ChunkCache = new GameObject[MaxChunks, MaxChunks];
+            IsInitialising = true;
+            LastPlayerChunk = new Vector2Int();
         }
 
-        yield break;
+        CurrentPlayerChunk = GetCurrentPlayerChunk();
+        if (LastPlayerChunk == CurrentPlayerChunk)
+        {
+            return;
+        }
+
+        LastPlayerChunk = CurrentPlayerChunk;
+
+        IEnumerator coroutine = ChunkGenerator();
+        StartCoroutine(coroutine);
     }
 
-    // Generates a brand new chunk that gets picked up by the ChunkSystem
-    private GameObject GenerateChunk(int x, int z, VoxelWorld world, Transform transform, bool isPlayerChunk = false)
+    private Vector2Int GetCurrentPlayerChunk()
     {
-        Vector3 position = transform.position;
-
-        // Move chunks base position so [0, 0] is actually the center of the world and not the origin
-        position.x += -((float)world.maxChunks * (float)world.chunkSize / 2);
-        position.z += -((float)world.maxChunks * (float)world.chunkSize / 2);
-
-        position.x += x * world.chunkSize;
-        position.z += z * world.chunkSize;
-
-        GameObject newChunk = GameObject.Instantiate(world.chunk, position, Quaternion.identity);
-        newChunk.gameObject.GetComponent<VoxelChunk>().ChunkSize = world.chunkSize;
-        newChunk.gameObject.GetComponent<VoxelChunk>().NeedsUpdate = true;
-        newChunk.gameObject.GetComponent<VoxelChunk>().ChunkHeight = 256;
-        newChunk.gameObject.GetComponent<VoxelChunk>().PositionX = x;
-        newChunk.gameObject.GetComponent<VoxelChunk>().PositionZ = z;
-
-        newChunk.transform.parent = world.transform;
-
-        return newChunk;
-    }
-
-    // Get current chunk that player is in
-    private Vector2Int GetActiveChunk(int maxChunks, int chunkSize)
-    {
-        // Find current player
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         float playerX = player.transform.position.x;
         float playerZ = player.transform.position.z;
 
-        // Move chunks base position so [0, 0] is actually the center of the world and not the origin
-        playerX += chunkSize * maxChunks / 2f;
-        playerZ += chunkSize * maxChunks / 2f;
+        playerX += ChunkSize * MaxChunks / 2f;
+        playerZ += ChunkSize * MaxChunks / 2f;
 
-        int x = Mathf.CeilToInt(playerX / chunkSize);
-        int z = Mathf.CeilToInt(playerZ / chunkSize);
+        int x = Mathf.CeilToInt(playerX / ChunkSize);
+        int z = Mathf.CeilToInt(playerZ / ChunkSize);
 
         // Chunk coordinates player is in
         return new Vector2Int(x - 1, z - 1);
+    }
+
+    IEnumerator ChunkGenerator()
+    {
+        for (int x = 0; x < MaxChunks; x++)
+        {
+            for (int z = 0; z < MaxChunks; z++)
+            {
+                UpdateChunk(x, z);
+            }
+        }
+
+        if (!IsInitialised)
+        {
+            IsInitialising = false;
+            IsInitialised = true;
+        }
+
+        yield break;
+    }
+
+    private void UpdateChunk(int x, int z)
+    {
+        if (IsInRenderDistance(x, z))
+        {
+            GameObject cachedChunk;
+            if (cachedChunk = GetCachedChunk(x, z))
+            {
+                cachedChunk.SetActive(true);
+            }
+            else
+            {
+                GenerateChunk(x, z, IsPlayerChunk(x, z) && IsInitialising);
+            }
+        }
+        else
+        {
+            GameObject cachedChunk;
+            if (cachedChunk = GetCachedChunk(x, z))
+            {
+                cachedChunk.SetActive(false);
+            }
+        }
+    }
+
+    private bool IsInRenderDistance(int x, int z)
+    {
+        bool isInX = CurrentPlayerChunk.x - RenderDistance < x && CurrentPlayerChunk.x + RenderDistance > x;
+        bool isInY = CurrentPlayerChunk.y - RenderDistance < z && CurrentPlayerChunk.y + RenderDistance > z;
+
+        return (isInX && isInY);
+    }
+
+    private bool IsPlayerChunk(int x, int z)
+    {
+        return (x == CurrentPlayerChunk.x && z == CurrentPlayerChunk.y);
+    }
+
+    public GameObject GetCachedChunk(int x, int z)
+    {
+        if (x >= MaxChunks || z >= MaxChunks)
+        {
+            return null;
+        }
+
+        return ChunkCache[x, z];
+    }
+
+    private void GenerateChunk(int x, int z, bool isSpawnChunk)
+    {
+        Vector3 position = transform.position;
+
+        position.x += -((float)MaxChunks * (float)ChunkSize / 2);
+        position.z += -((float)MaxChunks * (float)ChunkSize / 2);
+
+        position.x += x * ChunkSize;
+        position.z += z * ChunkSize;
+
+        GameObject newChunk = GameObject.Instantiate(VoxelChunkPrefab, position, Quaternion.identity);
+        newChunk.gameObject.GetComponent<VoxelChunk>().ChunkSize = ChunkSize;
+        newChunk.gameObject.GetComponent<VoxelChunk>().NeedsUpdate = true;
+        newChunk.gameObject.GetComponent<VoxelChunk>().VoxelWorldInstance = this;
+        newChunk.gameObject.GetComponent<VoxelChunk>().ChunkHeight = 256;
+        newChunk.gameObject.GetComponent<VoxelChunk>().PositionX = x;
+        newChunk.gameObject.GetComponent<VoxelChunk>().PositionZ = z;
+        newChunk.gameObject.GetComponent<VoxelChunk>().SpawnPlayerAfterUpdate = isSpawnChunk;
+        newChunk.name = $"Chunk {x}_{z}";
+
+        newChunk.transform.parent = transform;
+
+        ChunkCache[x, z] = newChunk;
     }
 }

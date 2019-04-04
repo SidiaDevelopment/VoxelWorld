@@ -161,7 +161,7 @@ MonoBehaviour:
   interactionDistance: 6
   crosshairImage: {fileID: 10914, guid: 0000000000000000f000000000000000, type: 0}
   colliderTag: Chunk
-  world: {fileID: 1721392685}
+  world: {fileID: 1665454679}
 --- !u!114 &611736610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -451,7 +451,7 @@ Skybox:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   m_CustomSkybox: {fileID: 2100000, guid: e222162ddb8d34547a133b673221b195, type: 2}
---- !u!1 &1721392685
+--- !u!1 &1665454679
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -459,9 +459,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1721392688}
-  - component: {fileID: 1721392687}
-  - component: {fileID: 1721392686}
+  - component: {fileID: 1665454681}
+  - component: {fileID: 1665454680}
   m_Layer: 0
   m_Name: World
   m_TagString: Untagged
@@ -469,41 +468,35 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1721392686
+--- !u!114 &1665454680
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1721392685}
+  m_GameObject: {fileID: 1665454679}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
+  m_Script: {fileID: 11500000, guid: 192ecdb62206b5140b3db0301c037e5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1721392687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1721392685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 368bef8470cf4b2428048692c81c1316, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  chunk: {fileID: 8453008513680101487, guid: e21c36f93f725a44a823192a48f8dfe8, type: 3}
-  renderDistance: 2
-  maxChunks: 199
-  chunkSize: 5
---- !u!4 &1721392688
+  VoxelChunkPrefab: {fileID: 8453008513680101487, guid: e21c36f93f725a44a823192a48f8dfe8,
+    type: 3}
+  RenderDistance: 5
+  MaxChunks: 255
+  ChunkSize: 16
+  ChunkHeight: 128
+  IsInitialised: 0
+  IsInitialising: 0
+  CurrentPlayerChunk: {x: 0, y: 0}
+  LastPlayerChunk: {x: 0, y: 0}
+--- !u!4 &1665454681
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1721392685}
+  m_GameObject: {fileID: 1665454679}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}

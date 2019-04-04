@@ -37,7 +37,6 @@ public class CameraBehavior : MonoBehaviour
     {
         if (Cursor.lockState != CursorLockMode.Locked)
         {
-            // Debug stuff
             if (Input.GetMouseButton(0))
             {
                 Cursor.lockState = CursorLockMode.Locked;
@@ -83,7 +82,7 @@ public class CameraBehavior : MonoBehaviour
     {
         Transform camera = transform.GetComponentInChildren<Camera>().transform;
 
-        int layerMask = 1 << 9;
+        int layerMask = 1 << 8;
         layerMask = ~layerMask;
 
         if (Input.GetMouseButtonDown(0))
@@ -118,30 +117,30 @@ public class CameraBehavior : MonoBehaviour
                     localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2)) + hit.normal.y;
                     localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2)) + hit.normal.z;
 
-                    Chunk currentChunk = hit.transform.GetComponent<Chunk>();
+                    VoxelChunk currentChunk = hit.transform.GetComponent<VoxelChunk>();
                     VoxelWorld currentWorld = world.GetComponent<VoxelWorld>();
-                    if (localPosition.x == 16)
+                    if (localPosition.x == currentWorld.ChunkSize)
                     {
-                        currentWorld.GetChunk(currentChunk.x + 1, currentChunk.y).GetComponent<Chunk>().CreateVoxel(0, (int)localPosition.y, (int)localPosition.z);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX + 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(0, (int)localPosition.y, (int)localPosition.z);
                         return;
                     }
                     if (localPosition.x == -1)
                     {
-                        currentWorld.GetChunk(currentChunk.x - 1, currentChunk.y).GetComponent<Chunk>().CreateVoxel(15, (int)localPosition.y, (int)localPosition.z);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX - 1, currentChunk.PositionZ).GetComponent<VoxelChunk>().PlaceVoxel(currentWorld.ChunkSize - 1, (int)localPosition.y, (int)localPosition.z);
                         return;
                     }
-                    if (localPosition.z == 16)
+                    if (localPosition.z == currentWorld.ChunkSize)
                     {
-                        currentWorld.GetChunk(currentChunk.x, currentChunk.y + 1).GetComponent<Chunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, 0);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX, currentChunk.PositionZ + 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, 0);
                         return;
                     }
                     if (localPosition.z == -1)
                     {
-                        currentWorld.GetChunk(currentChunk.x, currentChunk.y - 1).GetComponent<Chunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, 15);
+                        currentWorld.GetCachedChunk(currentChunk.PositionX, currentChunk.PositionZ - 1).GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, currentWorld.ChunkSize - 1);
                         return;
                     }
 
-                    hit.transform.GetComponent<Chunk>().CreateVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
+                    hit.transform.GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }
             }
         }

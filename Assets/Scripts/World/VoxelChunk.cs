@@ -1,23 +1,31 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using Unity.Entities;
+
+public enum BlockTypes : int
+{
+    BLOCK_AIR = 0,
+    BLOCK_GRASS
+}
 
 public class VoxelChunk : MonoBehaviour
 {
     [SerializeField] public GameObject DefaultVoxel;
     [SerializeField] public bool NeedsUpdate = false;
     [SerializeField] public bool IsInitialised = false;
+    [SerializeField] public bool IsInitialising = false;
 
     [SerializeField] public int PositionX;
     [SerializeField] public int PositionZ;
     [SerializeField] public int ChunkSize = 16;
     [SerializeField] public int ChunkHeight = 256;
+    [SerializeField] public bool SpawnPlayerAfterUpdate;
 
     [SerializeField] public float PerlinAmplifier = 10f;
     [SerializeField] public float PerlinFrequency = 20f;
     [SerializeField] public float PerlinSeed = 99;
 
+    [NonSerialized] public VoxelWorld VoxelWorldInstance;
     [NonSerialized] public GameObject[,,] VoxelInstances;
     [NonSerialized] public BlockTypes[,,] VoxelIndex;
     [NonSerialized] public BlockTypes[,,] CurrentVoxels;
@@ -46,108 +54,137 @@ public class VoxelChunk : MonoBehaviour
         VoxelIndex[x, y, z] = voxelType;
         NeedsUpdate = true;
     }
-}
 
-public enum BlockTypes : int
-{
-    BLOCK_AIR = 0,
-    BLOCK_GRASS
-}
-
-public class VoxelChunkSystem : ComponentSystem
-{
-    private struct ChunkData
+    public void UpdateVoxelFaces(int x, int y, int z)
     {
-        public VoxelChunk chunkObject;
-        public Transform transform;
+        GameObject voxel = GetVoxel(x, y, z);
+
+        voxel.transform.Find("Top").gameObject.SetActive(y >= ChunkHeight - 1 || VoxelIndex[x, y + 1, z] == BlockTypes.BLOCK_AIR);
+        voxel.transform.Find("Bottom").gameObject.SetActive(y <= 0 || VoxelIndex[x, y - 1, z] == BlockTypes.BLOCK_AIR);
+        voxel.transform.Find("Back").gameObject.SetActive(x >= ChunkSize - 1 || VoxelIndex[x + 1, y, z] == BlockTypes.BLOCK_AIR);
+        voxel.transform.Find("Front").gameObject.SetActive(x <= 0 || VoxelIndex[x - 1, y, z] == BlockTypes.BLOCK_AIR);
+        voxel.transform.Find("Left").gameObject.SetActive(z >= ChunkSize - 1 || VoxelIndex[x, y, z + 1] == BlockTypes.BLOCK_AIR);
+        voxel.transform.Find("Right").gameObject.SetActive(z <= 0 || VoxelIndex[x, y, z - 1] == BlockTypes.BLOCK_AIR);
     }
 
-    protected override void OnUpdate()
+    public void UpdateSurroundingVoxelFaces(int x, int y, int z)
     {
-        foreach (var chunk in GetEntities<ChunkData>())
+        if (x < ChunkSize - 1)
         {
-            if (!chunk.chunkObject.NeedsUpdate) continue;
-            chunk.chunkObject.NeedsUpdate = false;
+            if (GetVoxel(x + 1, y, z))
+                UpdateVoxelFaces(x + 1, y, z);
+        }
 
-            IEnumerator chunkUpdate = ChunkUpdate(chunk);
-            MonoBehaviour routineProxy = chunk.chunkObject;
-            routineProxy.StartCoroutine(chunkUpdate);
+        if (x > 0)
+        {
+            if (GetVoxel(x - 1, y, z))
+                UpdateVoxelFaces(x - 1, y, z);
+        }
+
+        if (y < ChunkHeight - 1)
+        {
+            if (GetVoxel(x, y + 1, z))
+                UpdateVoxelFaces(x, y + 1, z);
+        }
+
+        if (y > 0)
+        {
+            if (GetVoxel(x, y - 1, z))
+                UpdateVoxelFaces(x, y - 1, z);
+        }
+
+        if (z < ChunkSize - 1)
+        {
+            if (GetVoxel(x, y, z + 1))
+                UpdateVoxelFaces(x, y, z + 1);
+        }
+
+        if (z > 0)
+        {
+            if (GetVoxel(x, y, z - 1))
+                UpdateVoxelFaces(x, y, z - 1);
         }
     }
 
-    IEnumerator ChunkUpdate(ChunkData chunkData)
+    void Update()
     {
-        VoxelChunk chunk = chunkData.chunkObject;
 
-        if (!chunk.IsInitialised)
+        if (!NeedsUpdate) return;
+        NeedsUpdate = false;
+
+        IEnumerator chunkUpdate = ChunkUpdate();
+        StartCoroutine(chunkUpdate);
+    }
+
+    IEnumerator ChunkUpdate()
+    {
+        if (!IsInitialised)
         {
-            chunk.VoxelIndex = GenerateVoxelIndex(chunk, chunkData.transform);
-            chunk.CurrentVoxels = new BlockTypes[chunk.ChunkSize, chunk.ChunkHeight, chunk.ChunkSize];
-            chunk.VoxelInstances = new GameObject[chunk.ChunkSize, chunk.ChunkHeight, chunk.ChunkSize];
+            VoxelIndex = GenerateVoxelIndex();
+            CurrentVoxels = new BlockTypes[ChunkSize, ChunkHeight, ChunkSize];
+            VoxelInstances = new GameObject[ChunkSize, ChunkHeight, ChunkSize];
+            IsInitialising = true;
 
             yield return new WaitForEndOfFrame();
         }
 
-        for (int x = 0; x < chunk.ChunkSize; x++)
+        Debug.Log("updating " + gameObject.name);
+
+        for (int x = 0; x < ChunkSize; x++)
         {
-            for (int z = 0; z < chunk.ChunkSize; z++)
+            for (int z = 0; z < ChunkSize; z++)
             {
-                for (int y = 0; y < chunk.ChunkHeight; y++)
+                for (int y = 0; y < ChunkHeight; y++)
                 {
-                    if (chunk.VoxelIndex[x, y, z] == BlockTypes.BLOCK_AIR)
-                    {
-                        if (chunk.VoxelInstances[x, y, z])
-                        {
-                            GameObject.Destroy(chunk.VoxelInstances[x, y, z]);
-                            chunk.VoxelInstances[x, y, z] = null;
-                        }
-                    }
-                    else if (chunk.CurrentVoxels[x, y, z] != chunk.VoxelIndex[x, y, z])
-                    {
-                        chunk.VoxelInstances[x, y, z] = CreateVoxel(x, y, z, chunk, chunkData.transform);
-                        chunk.CurrentVoxels[x, y, z] = chunk.VoxelIndex[x, y, z];
-                    }
+                    UpdateVoxel(x, y, z);
                 }
 
-                if (!chunk.IsInitialised)
+                if (IsInitialising)
                 {
                     yield return new WaitForEndOfFrame();
                 }
             }
         }
 
-        MeshCombiner.combineMeshWithMaterials(chunk.gameObject);
+        MeshCombiner.combineMeshWithMaterials(VoxelInstances, gameObject);
 
-        if (!chunk.IsInitialised)
+        if (SpawnPlayerAfterUpdate)
         {
-            chunk.IsInitialised = true;
+            SpawnPlayerAfterUpdate = false;
+            SpawnPlayer();
+        }
+
+        if (IsInitialising && !IsInitialised)
+        {
+            IsInitialised = true;
+            IsInitialising = false;
         }
 
         yield break;
     }
 
-    private BlockTypes[,,] GenerateVoxelIndex(VoxelChunk chunk, Transform transform)
+    private BlockTypes[,,] GenerateVoxelIndex()
     {
-        BlockTypes[,,] voxelIndex = new BlockTypes[chunk.ChunkSize, chunk.ChunkHeight, chunk.ChunkSize];
+        BlockTypes[,,] voxelIndex = new BlockTypes[ChunkSize, ChunkHeight, ChunkSize];
         Vector3 position = transform.position;
         float positionX, positionZ;
         int maxY;
 
-        for (int x = 0; x < chunk.ChunkSize; x++)
+        for (int x = 0; x < ChunkSize; x++)
         {
-            for (int z = 0; z < chunk.ChunkSize; z++)
+            for (int z = 0; z < ChunkSize; z++)
             {
                 positionX = position.x + x;
                 positionZ = position.z + z;
 
                 maxY = Mathf.FloorToInt(
                     Mathf.PerlinNoise(
-                        (chunk.PerlinSeed + positionX) / chunk.PerlinFrequency,
-                        (chunk.PerlinSeed + positionZ) / chunk.PerlinFrequency
-                    ) * chunk.PerlinAmplifier
+                        (PerlinSeed + positionX) / PerlinFrequency,
+                        (PerlinSeed + positionZ) / PerlinFrequency
+                    ) * PerlinAmplifier
                 );
 
-                for (int y = 0; y < chunk.ChunkHeight; y++)
+                for (int y = 0; y < ChunkHeight; y++)
                 {
                     if (y <= maxY)
                     {
@@ -160,12 +197,40 @@ public class VoxelChunkSystem : ComponentSystem
                 }
             }
         }
-        
+
 
         return voxelIndex;
     }
 
-    private GameObject CreateVoxel(int x, int y, int z, VoxelChunk chunk, Transform transform)
+    private void UpdateVoxel(int x, int y, int z)
+    {
+        if (CurrentVoxels[x, y, z] != VoxelIndex[x, y, z])
+        {
+            if (GetVoxel(x, y, z))
+            {
+                GameObject.Destroy(GetVoxel(x, y, z));
+            }
+
+            if (VoxelIndex[x, y, z] == BlockTypes.BLOCK_AIR)
+            {
+                VoxelInstances[x, y, z] = null;
+                CurrentVoxels[x, y, z] = BlockTypes.BLOCK_AIR;
+            }
+            else
+            {
+                VoxelInstances[x, y, z] = CreateVoxel(x, y, z);
+                CurrentVoxels[x, y, z] = VoxelIndex[x, y, z];
+                UpdateVoxelFaces(x, y, z);
+            }
+
+            if (!IsInitialising)
+            {
+                UpdateSurroundingVoxelFaces(x, y, z);
+            }
+        }
+    }
+
+    private GameObject CreateVoxel(int x, int y, int z)
     {
         Vector3 position = transform.position;
 
@@ -173,22 +238,53 @@ public class VoxelChunkSystem : ComponentSystem
         position.y += y + 0.5f;
         position.z += z + 0.5f;
 
-        GameObject instance = GameObject.Instantiate(chunk.DefaultVoxel, position, Quaternion.identity);
+        GameObject instance = GameObject.Instantiate(DefaultVoxel, position, Quaternion.identity);
+        instance.name = $"Voxel {x}_{y}_{z}";
         instance.transform.parent = transform;
         instance.SetActive(false);
-
-        UpdateVoxel(x, y, z, chunk, ref instance);
 
         return instance;
     }
 
-    public void UpdateVoxel(int x, int y, int z, VoxelChunk chunk, ref GameObject voxel)
+    private GameObject GetVoxel(int x, int y, int z)
     {
-        voxel.transform.Find("Top").gameObject.SetActive(y >= chunk.ChunkHeight - 1 || chunk.VoxelIndex[x, y + 1, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Bottom").gameObject.SetActive(y <= 0 || chunk.VoxelIndex[x, y - 1, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Back").gameObject.SetActive(x >= chunk.ChunkSize - 1 || chunk.VoxelIndex[x + 1, y, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Front").gameObject.SetActive(x <= 0 || chunk.VoxelIndex[x - 1, y, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Left").gameObject.SetActive(z >= chunk.ChunkSize - 1 || chunk.VoxelIndex[x, y, z + 1] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Right").gameObject.SetActive(z <= 0 || chunk.VoxelIndex[x, y, z - 1] == BlockTypes.BLOCK_AIR);
+        if (x >= ChunkSize || y >= ChunkHeight || z >= ChunkSize)
+        {
+            return null;
+        }
+
+        if (!VoxelInstances[x, y, z])
+        {
+            return null;
+        }
+
+        return VoxelInstances[x, y, z];
+    }
+
+    private void SpawnPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        Vector3 chunkPosition = transform.position;
+        Vector3 overChunkCenter = new Vector3(chunkPosition.x + (float)ChunkSize / 2, chunkPosition.y + ChunkHeight, chunkPosition.z + (float)ChunkSize / 2);
+
+        int layerMask = 1 << 8;
+        layerMask = ~layerMask;
+
+        RaycastHit hit;
+        bool didRayCastHit = Physics.Raycast(overChunkCenter, player.transform.TransformDirection(Vector3.down), out hit, Mathf.Infinity, layerMask);
+
+        if (didRayCastHit)
+        {
+            Debug.Log("Found floor to spawn on: " + hit.collider.name);
+            player.transform.position = new Vector3(chunkPosition.x + (float)ChunkSize / 2, hit.point.y + 5, chunkPosition.z + (float)ChunkSize / 2);
+        }
+        else
+        {
+            Debug.Log("Couldn't find floor to spawn on");
+            player.transform.position = overChunkCenter;
+        }
+
+        player.GetComponent<Rigidbody>().useGravity = true;
     }
 }
