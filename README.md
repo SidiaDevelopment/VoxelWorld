@@ -31,7 +31,7 @@ While the github example project shows the use very well it does not explain it,
 so I can't just look them up. Also it adds layers and layers of complexity that I am not ready for yet. 
 Missing Editor interfaces, multiple Editor bugs.
 
-*Result:* Even though I got prototypes to work I decided to wait to look at ECS until it's not in preview state anymore as its current state
+**Result:** Even though I got prototypes to work I decided to wait to look at ECS until it's not in preview state anymore as its current state
 rather slows me down than teaches me anything new.
 
 ### Performance
@@ -39,7 +39,7 @@ rather slows me down than teaches me anything new.
 Having 1000 voxels on my screen wasn't a problem. Having 5000+ was a problem. I did not expect my high end PC to be overwhelmed that fast.
 A bit of research led me to mesh combining.
 
-*Result:* Combining meshes greatly improves the performance. It worked great until...
+**Result:** Combining meshes greatly improves the performance. It worked great until...
 
 ### Mesh Combining with materials
 
@@ -49,7 +49,7 @@ that combined one mesh for each material and then combined everything into one m
 Attaching the material list and everything was running.
 Adding the now missing collider was not a problem as I could just add a MeshCollider to the newly generated mesh
 
-*Result:* Finally mesh combining 
+**Result:** Finally mesh combining 
 
 ### Performance II
 
@@ -58,14 +58,14 @@ before all chunks are generated. I got suggested to use ECS which as described a
 I figured out to delay the generation over multiple frames with a Coroutine and waiting after each column with 
 `yield return new WaitForEndOfFrame();`
 
-*Result:* This is not a perfect solution and FPS still drop whilst generating chunks but the impact is justifyable at this point.
+**Result:** This is not a perfect solution and FPS still drop whilst generating chunks but the impact is justifyable at this point.
 
 ### Code cluttering
 
 After hours of experimenting I had a hard time to figure out my own code. I started reworking classes and finally rewrote the 
 entire VoxelChunk class from scratch with my new knowledge. Other classes will follow.
 
-*Result:* Having 1-2 days of cleaning code between feature sessions will lead to following positive points:
+**Result:** Having 1-2 days of cleaning code between feature sessions will lead to following positive points:
  - Better overview of how the code interacts
  - On the fly improvements or overall improvements when rewriting
  
@@ -73,7 +73,7 @@ This point is still TBD
 
 ## In a nutshell
 
-*04.04.2019:*
+**04.04.2019:**
 Do not clamp onto one topic and do that one no matter what. Let problems rest for a day or two if you get stuck. 
 ECS almost cost me my motivation to go forward until I realised I had dug to deep. ECS is unfinished and even experienced people 
 have their problems. Going forward I will focus on more essential parts.
