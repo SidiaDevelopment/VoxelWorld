@@ -37,7 +37,6 @@ public class CameraBehavior : MonoBehaviour
     {
         if (Cursor.lockState != CursorLockMode.Locked)
         {
-            // Debug stuff
             if (Input.GetMouseButton(0))
             {
                 Cursor.lockState = CursorLockMode.Locked;

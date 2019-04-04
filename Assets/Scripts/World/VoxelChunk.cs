@@ -57,7 +57,7 @@ public class VoxelChunk : MonoBehaviour
 
     public void UpdateVoxelFaces(int x, int y, int z)
     {
-        GameObject voxel = VoxelInstances[x, y, z];
+        GameObject voxel = GetVoxel(x, y, z);
 
         voxel.transform.Find("Top").gameObject.SetActive(y >= ChunkHeight - 1 || VoxelIndex[x, y + 1, z] == BlockTypes.BLOCK_AIR);
         voxel.transform.Find("Bottom").gameObject.SetActive(y <= 0 || VoxelIndex[x, y - 1, z] == BlockTypes.BLOCK_AIR);
@@ -71,37 +71,37 @@ public class VoxelChunk : MonoBehaviour
     {
         if (x < ChunkSize - 1)
         {
-            if (VoxelInstances[x + 1, y, z])
+            if (GetVoxel(x + 1, y, z))
                 UpdateVoxelFaces(x + 1, y, z);
         }
 
         if (x > 0)
         {
-            if (VoxelInstances[x - 1, y, z])
+            if (GetVoxel(x - 1, y, z))
                 UpdateVoxelFaces(x - 1, y, z);
         }
 
         if (y < ChunkHeight - 1)
         {
-            if (VoxelInstances[x, y + 1, z])
+            if (GetVoxel(x, y + 1, z))
                 UpdateVoxelFaces(x, y + 1, z);
         }
 
         if (y > 0)
         {
-            if (VoxelInstances[x, y - 1, z])
+            if (GetVoxel(x, y - 1, z))
                 UpdateVoxelFaces(x, y - 1, z);
         }
 
         if (z < ChunkSize - 1)
         {
-            if (VoxelInstances[x, y, z + 1])
+            if (GetVoxel(x, y, z + 1))
                 UpdateVoxelFaces(x, y, z + 1);
         }
 
         if (z > 0)
         {
-            if (VoxelInstances[x, y, z - 1])
+            if (GetVoxel(x, y, z - 1))
                 UpdateVoxelFaces(x, y, z - 1);
         }
     }
@@ -206,9 +206,9 @@ public class VoxelChunk : MonoBehaviour
     {
         if (CurrentVoxels[x, y, z] != VoxelIndex[x, y, z])
         {
-            if (VoxelInstances[x, y, z])
+            if (GetVoxel(x, y, z))
             {
-                GameObject.Destroy(VoxelInstances[x, y, z]);
+                GameObject.Destroy(GetVoxel(x, y, z));
             }
 
             if (VoxelIndex[x, y, z] == BlockTypes.BLOCK_AIR)
@@ -246,6 +246,21 @@ public class VoxelChunk : MonoBehaviour
         return instance;
     }
 
+    private GameObject GetVoxel(int x, int y, int z)
+    {
+        if (x >= ChunkSize || y >= ChunkHeight || z >= ChunkSize)
+        {
+            return null;
+        }
+
+        if (!VoxelInstances[x, y, z])
+        {
+            return null;
+        }
+
+        return VoxelInstances[x, y, z];
+    }
+
     private void SpawnPlayer()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -271,6 +286,5 @@ public class VoxelChunk : MonoBehaviour
         }
 
         player.GetComponent<Rigidbody>().useGravity = true;
-
     }
 }
