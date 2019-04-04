@@ -482,9 +482,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VoxelChunkPrefab: {fileID: 8453008513680101487, guid: e21c36f93f725a44a823192a48f8dfe8,
     type: 3}
-  RenderDistance: 5
+  RenderDistance: 2
   MaxChunks: 255
-  ChunkSize: 16
+  ChunkSize: 9
   ChunkHeight: 128
   IsInitialised: 0
   IsInitialising: 0

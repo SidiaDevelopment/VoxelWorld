@@ -43,14 +43,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b1926b8b41e8d044be0a7a62945a4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultVoxel: {fileID: 4944935934371685150, guid: bb8011b39cbcc1943ab212785baab686,
-    type: 3}
+  VoxelPrefabs:
+  - {fileID: 4944935934371685150, guid: bb8011b39cbcc1943ab212785baab686, type: 3}
+  - {fileID: 4431619269414345152, guid: 28065183d940d5a45b73a61bc77c0a29, type: 3}
+  - {fileID: 4805143496305380727, guid: bc8ea05dad5f9ba419f8b268cda1618e, type: 3}
   NeedsUpdate: 0
   IsInitialised: 0
+  IsInitialising: 0
   PositionX: 0
   PositionZ: 0
   ChunkSize: 16
   ChunkHeight: 256
+  SpawnPlayerAfterUpdate: 0
   PerlinAmplifier: 10
   PerlinFrequency: 20
   PerlinSeed: 99
