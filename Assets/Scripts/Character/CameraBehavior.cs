@@ -10,6 +10,7 @@ public class CameraBehavior : MonoBehaviour
     [SerializeField] public float interactionDistance = 6f;
     [SerializeField] public Texture2D crosshairImage;
     [SerializeField] public string colliderTag = "Chunk";
+    [SerializeField] public LayerMask layerMask;
 
     [SerializeField] public GameObject world;
 
@@ -81,9 +82,6 @@ public class CameraBehavior : MonoBehaviour
     protected void UpdateInteraction()
     {
         Transform camera = transform.GetComponentInChildren<Camera>().transform;
-
-        int layerMask = 1 << 8;
-        layerMask = ~layerMask;
 
         if (Input.GetMouseButtonDown(0))
         {
