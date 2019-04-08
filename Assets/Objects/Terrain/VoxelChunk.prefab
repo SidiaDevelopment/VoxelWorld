@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3677826099581152045}
   - component: {fileID: 7970280938138937526}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: VoxelChunk
   m_TagString: Chunk
   m_Icon: {fileID: 0}
@@ -44,9 +44,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   VoxelPrefabs:
-  - {fileID: 4944935934371685150, guid: bb8011b39cbcc1943ab212785baab686, type: 3}
-  - {fileID: 4431619269414345152, guid: 28065183d940d5a45b73a61bc77c0a29, type: 3}
-  - {fileID: 4805143496305380727, guid: bc8ea05dad5f9ba419f8b268cda1618e, type: 3}
+  - {fileID: 6360117897581335429, guid: c913f26283b14fc47af65f4818534baf, type: 3}
+  - {fileID: 3191319228559022956, guid: d5411b48d472cb046899e0a962167302, type: 3}
+  - {fileID: 6728568157178239639, guid: 9660c3f0f1e46b043be12a1d3858b28e, type: 3}
+  DroppedItemContainerPrefab: {fileID: 876786413701288363, guid: 9d77abb5b3c5fef4f86f1d78bd3fd15e,
+    type: 3}
   NeedsUpdate: 0
   IsInitialised: 0
   IsInitialising: 0

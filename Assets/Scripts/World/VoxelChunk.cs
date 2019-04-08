@@ -13,6 +13,7 @@ public enum BlockTypes : int
 public class VoxelChunk : MonoBehaviour
 {
     [SerializeField] public GameObject[] VoxelPrefabs;
+    [SerializeField] public GameObject DroppedItemContainerPrefab;
     [SerializeField] public bool NeedsUpdate = false;
     [SerializeField] public bool IsInitialised = false;
     [SerializeField] public bool IsInitialising = false;
@@ -225,7 +226,13 @@ public class VoxelChunk : MonoBehaviour
         {
             if (GetVoxel(x, y, z))
             {
-                GameObject.Destroy(GetVoxel(x, y, z));
+                GameObject oldVoxel = GetVoxel(x, y, z);
+                GameObject droppedItem = Instantiate(DroppedItemContainerPrefab, oldVoxel.transform.position, Quaternion.identity);
+                DroppedItem droppedItemScript = droppedItem.GetComponent<DroppedItem>();
+                droppedItemScript.DroppedItemPrefab = VoxelPrefabs[(int)CurrentVoxels[x, y, z] - 1];
+                droppedItemScript.BlockType = CurrentVoxels[x, y, z];
+
+                Destroy(oldVoxel);
             }
 
             if (VoxelIndex[x, y, z] == BlockTypes.BLOCK_AIR)

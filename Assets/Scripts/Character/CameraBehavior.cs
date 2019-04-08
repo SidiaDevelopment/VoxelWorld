@@ -10,6 +10,7 @@ public class CameraBehavior : MonoBehaviour
     [SerializeField] public float interactionDistance = 6f;
     [SerializeField] public Texture2D crosshairImage;
     [SerializeField] public string colliderTag = "Chunk";
+    [SerializeField] public LayerMask layerMask;
 
     [SerializeField] public GameObject world;
 
@@ -82,9 +83,6 @@ public class CameraBehavior : MonoBehaviour
     {
         Transform camera = transform.GetComponentInChildren<Camera>().transform;
 
-        int layerMask = 1 << 8;
-        layerMask = ~layerMask;
-
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
@@ -140,9 +138,24 @@ public class CameraBehavior : MonoBehaviour
                         return;
                     }
 
-                    hit.transform.GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
+                    Inventory inventory = GetComponentInParent<Inventory>();
+                    InventoryItem item = inventory.TakeItem();
+
+                    if (item != null)
+                    {
+                        hit.transform.GetComponent<VoxelChunk>().PlaceVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z, item.BlockType);
+                    }
                 }
             }
+        }
+
+        if (Input.GetAxis("Mouse ScrollWheel") != 0f)
+        {
+            float scrolled = Input.GetAxis("Mouse ScrollWheel") * 10;
+            int scrolledRounded = Mathf.RoundToInt(scrolled);
+
+            GetComponentInParent<Inventory>().Scroll(scrolledRounded);
+
         }
     }
 }

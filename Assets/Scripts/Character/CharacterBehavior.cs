@@ -3,8 +3,9 @@
 public class CharacterBehavior : MonoBehaviour
 {
 
-    [SerializeField] private float moveSpeed = 2;
-    [SerializeField] private float jumpForce = 1;
+    [SerializeField] public float moveSpeed = 2;
+    [SerializeField] public float jumpForce = 1;
+    [SerializeField] public string DroppedItemTag = "DroppedItem";
 
     private float m_currentV = 0;
     private float m_currentH = 0;
@@ -47,6 +48,15 @@ public class CharacterBehavior : MonoBehaviour
         else
         {
             m_speedMult = 1f;
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == DroppedItemTag)
+        {
+            GetComponent<Inventory>().AddItem(other.gameObject.GetComponent<DroppedItem>().BlockType);
+            Destroy(other.gameObject);
         }
     }
 }
