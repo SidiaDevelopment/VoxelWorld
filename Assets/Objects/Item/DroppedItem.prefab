@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 876786413701288361}
   - component: {fileID: 876786413701288360}
   - component: {fileID: 7587936660142518434}
-  - component: {fileID: 6606155616871575439}
-  m_Layer: 9
+  - component: {fileID: 7830925895133570054}
+  m_Layer: 0
   m_Name: DroppedItem
-  m_TagString: Untagged
+  m_TagString: DroppedItem
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -45,9 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 341bc173033035e4da8dec7fdb0fb778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 10
-  DroppedItemScale: 0.25
   DroppedItemPrefab: {fileID: 0}
+  DroppedItemContainerPrefab: {fileID: 4605178202865296480, guid: 87bb2ff98708453439f3211fac8680ca,
+    type: 3}
 --- !u!54 &7587936660142518434
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -64,16 +64,16 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!65 &6606155616871575439
-BoxCollider:
+--- !u!135 &7830925895133570054
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 876786413701288363}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
+  m_IsTrigger: 1
+  m_Enabled: 0
   serializedVersion: 2
-  m_Size: {x: 0.9, y: 0.9, z: 0.9}
+  m_Radius: 2
   m_Center: {x: 0, y: 0, z: 0}

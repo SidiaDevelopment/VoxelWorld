@@ -228,7 +228,10 @@ public class VoxelChunk : MonoBehaviour
             {
                 GameObject oldVoxel = GetVoxel(x, y, z);
                 GameObject droppedItem = Instantiate(DroppedItemContainerPrefab, oldVoxel.transform.position, Quaternion.identity);
-                droppedItem.GetComponent<DroppedItem>().DroppedItemPrefab = VoxelPrefabs[(int)CurrentVoxels[x, y, z] - 1];
+                DroppedItem droppedItemScript = droppedItem.GetComponent<DroppedItem>();
+                droppedItemScript.DroppedItemPrefab = VoxelPrefabs[(int)CurrentVoxels[x, y, z] - 1];
+                droppedItemScript.BlockType = CurrentVoxels[x, y, z];
+
                 Destroy(oldVoxel);
             }
 
