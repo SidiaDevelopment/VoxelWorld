@@ -14,6 +14,7 @@ public class Inventory : MonoBehaviour
     public void Start()
     {
         Items = new InventoryItem[ItemCount];
+        Items[0] = new InventoryItem(BlockTypes.BLOCK_TORCH, 20);
     }
 
     public InventoryItem GetItem(int index)

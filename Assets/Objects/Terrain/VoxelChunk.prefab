@@ -47,6 +47,7 @@ MonoBehaviour:
   - {fileID: 6360117897581335429, guid: c913f26283b14fc47af65f4818534baf, type: 3}
   - {fileID: 3191319228559022956, guid: d5411b48d472cb046899e0a962167302, type: 3}
   - {fileID: 6728568157178239639, guid: 9660c3f0f1e46b043be12a1d3858b28e, type: 3}
+  - {fileID: 6527984431282994006, guid: b994d99f2aa0c9d4ca40b0131a92ef5c, type: 3}
   DroppedItemContainerPrefab: {fileID: 876786413701288363, guid: 9d77abb5b3c5fef4f86f1d78bd3fd15e,
     type: 3}
   NeedsUpdate: 0

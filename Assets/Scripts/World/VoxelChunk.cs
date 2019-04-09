@@ -7,7 +7,8 @@ public enum BlockTypes : int
     BLOCK_AIR = 0,
     BLOCK_GRASS,
     BLOCK_DIRT,
-    BLOCK_STONE
+    BLOCK_STONE,
+    BLOCK_TORCH
 }
 
 public class VoxelChunk : MonoBehaviour
@@ -61,13 +62,9 @@ public class VoxelChunk : MonoBehaviour
     public void UpdateVoxelFaces(int x, int y, int z)
     {
         GameObject voxel = GetVoxel(x, y, z);
+        Block block = voxel.GetComponent<Block>();
 
-        voxel.transform.Find("Top").gameObject.SetActive(y >= ChunkHeight - 1 || VoxelIndex[x, y + 1, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Bottom").gameObject.SetActive(y <= 0 || VoxelIndex[x, y - 1, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Back").gameObject.SetActive(x >= ChunkSize - 1 || VoxelIndex[x + 1, y, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Front").gameObject.SetActive(x <= 0 || VoxelIndex[x - 1, y, z] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Left").gameObject.SetActive(z >= ChunkSize - 1 || VoxelIndex[x, y, z + 1] == BlockTypes.BLOCK_AIR);
-        voxel.transform.Find("Right").gameObject.SetActive(z <= 0 || VoxelIndex[x, y, z - 1] == BlockTypes.BLOCK_AIR);
+        block.UpdateFaces(x, y, z, ChunkHeight, ChunkSize, VoxelIndex);
     }
 
     public void UpdateSurroundingVoxelFaces(int x, int y, int z)
@@ -263,7 +260,11 @@ public class VoxelChunk : MonoBehaviour
         GameObject instance = GameObject.Instantiate(VoxelPrefabs[(int)type - 1], position, Quaternion.identity);
         instance.name = $"Voxel {x}_{y}_{z}";
         instance.transform.parent = transform;
-        instance.SetActive(false);
+
+        if (type != BlockTypes.BLOCK_TORCH)
+        {
+            instance.SetActive(false);
+        }
 
         return instance;
     }

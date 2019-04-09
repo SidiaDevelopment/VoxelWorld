@@ -10,6 +10,7 @@ public class CameraBehavior : MonoBehaviour
     [SerializeField] public float interactionDistance = 6f;
     [SerializeField] public Texture2D crosshairImage;
     [SerializeField] public string colliderTag = "Chunk";
+    [SerializeField] public string nonBlockingColliderTag = "SpawnableObject";
     [SerializeField] public LayerMask layerMask;
 
     [SerializeField] public GameObject world;
@@ -97,6 +98,17 @@ public class CameraBehavior : MonoBehaviour
                     localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2));
 
                     hit.transform.GetComponent<VoxelChunk>().RemoveVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
+                }
+
+                if (hit.collider.tag.Equals(nonBlockingColliderTag))
+                {
+                    Vector3 localPosition = hit.transform.parent.InverseTransformPoint(hit.point);
+
+                    localPosition.x = Mathf.FloorToInt(localPosition.x - (hit.normal.x / 2));
+                    localPosition.y = Mathf.FloorToInt(localPosition.y - (hit.normal.y / 2));
+                    localPosition.z = Mathf.FloorToInt(localPosition.z - (hit.normal.z / 2));
+
+                    hit.transform.parent.GetComponent<VoxelChunk>().RemoveVoxel((int)localPosition.x, (int)localPosition.y, (int)localPosition.z);
                 }
             }
         }

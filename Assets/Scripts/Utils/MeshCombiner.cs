@@ -14,6 +14,9 @@ public class MeshCombiner
         foreach (GameObject voxel in existingVoxels)
         {
             if (!voxel) continue;
+            Block blockScript = voxel.GetComponent<Block>();
+            if (!blockScript.ShouldCombine) continue;
+
             foreach (Transform child in voxel.transform)
             {
                 if (!child.gameObject.activeSelf)
