@@ -55,7 +55,10 @@ public class CharacterBehavior : MonoBehaviour
     {
         if (other.tag == DroppedItemTag)
         {
-            GetComponent<Inventory>().AddItem(other.gameObject.GetComponent<DroppedItem>().BlockType);
+            Inventory inventory = GetComponent<Inventory>();
+            if (!inventory.CanAddItem()) return;
+
+            inventory.AddItem(other.gameObject.GetComponent<DroppedItem>().BlockType);
             Destroy(other.gameObject);
         }
     }
