@@ -1,12 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using System.Collections.Generic;
 
 public class InventoryBar : MonoBehaviour
 {
     [SerializeField] public List<Texture2D> Images = new List<Texture2D>();
+
+    private enum InventorySlotUI
+    {
+        ITEM_SELECTED = 0,
+        ITEM_ICON,
+        ITEM_COUNT
+    }
 
     void Start()
     {
@@ -21,19 +27,23 @@ public class InventoryBar : MonoBehaviour
 
         foreach (Transform slot in inventoryPanel)
         {
-            Image itemImage = slot.GetChild(1).GetComponent<Image>();
-            TextMeshProUGUI itemCount = slot.GetChild(2).GetComponent<TextMeshProUGUI>();
+            Image itemImage = slot.GetChild((int)InventorySlotUI.ITEM_ICON).GetComponent<Image>();
+            TextMeshProUGUI itemCount = slot.GetChild((int)InventorySlotUI.ITEM_COUNT).GetComponent<TextMeshProUGUI>();
 
             itemImage.enabled = false;
             itemCount.enabled = false;
         }
 
-        int i = 0;
+        Inventory inventory = sender as Inventory;
 
-        foreach (InventoryItem item in (sender as Inventory).Items)
+        for (int i = 0; i < inventory.ItemCount; i++)
         {
-            Image itemImage = inventoryPanel.GetChild(i).GetChild(1).GetComponent<Image>();
-            TextMeshProUGUI itemCount = inventoryPanel.GetChild(i++).GetChild(2).GetComponent<TextMeshProUGUI>();
+            InventoryItem item = inventory.GetItem(i);
+
+            if (item == null) continue;
+
+            Image itemImage = inventoryPanel.GetChild(i).GetChild((int)InventorySlotUI.ITEM_ICON).GetComponent<Image>();
+            TextMeshProUGUI itemCount = inventoryPanel.GetChild(i).GetChild((int)InventorySlotUI.ITEM_COUNT).GetComponent<TextMeshProUGUI>();
 
             itemImage.enabled = true;
             itemCount.enabled = true;
@@ -52,7 +62,7 @@ public class InventoryBar : MonoBehaviour
         int i = 0;
         foreach (Transform slot in inventoryPanel)
         {
-            Image selectedImage = slot.GetChild(0).GetComponent<Image>();
+            Image selectedImage = slot.GetChild((int)InventorySlotUI.ITEM_SELECTED).GetComponent<Image>();
 
             selectedImage.enabled = position == i++;
         }

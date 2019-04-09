@@ -5,16 +5,43 @@ using UnityEngine;
 public class Inventory : MonoBehaviour
 {
     [SerializeField] public int ItemCount = 10;
-    [SerializeField] public List<InventoryItem> Items = new List<InventoryItem>();
+    [SerializeField] public InventoryItem[] Items;
     [SerializeField] public int CurrentlySelected = 0;
 
     public event EventHandler<InventoryEventArgs> ItemsUpdated;
     public event EventHandler<int> PositionUpdated;
 
+    public void Start()
+    {
+        Items = new InventoryItem[ItemCount];
+    }
+
+    public InventoryItem GetItem(int index)
+    {
+        return Items[index];
+    }
+
+    public bool CanAddItem()
+    {
+        for (int i = 0; i < ItemCount; i++)
+        {
+            InventoryItem item = Items[i];
+            if (item == null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void AddItem(BlockTypes blockType)
     {
-        foreach (InventoryItem item in Items)
+        for(int i = 0; i < ItemCount; i++)
         {
+            InventoryItem item = Items[i];
+            if (item == null) continue;
+
             if (item.BlockType == blockType && item.CanRaiseCount())
             {
                 item.RaiseCount();
@@ -23,11 +50,18 @@ public class Inventory : MonoBehaviour
             }
         }
 
-        if (Items.Count < 10)
+        for (int i = 0; i < ItemCount; i++)
         {
-            Items.Add(new InventoryItem(blockType));
-            ItemsUpdated(this, new InventoryEventArgs());
+            InventoryItem item = Items[i];
+            if (item == null)
+            {
+                Items[i] = new InventoryItem(blockType);
+                ItemsUpdated(this, new InventoryEventArgs());
+                return;
+            }           
         }
+
+        return;
     }
 
     public InventoryItem TakeItem()
@@ -37,7 +71,7 @@ public class Inventory : MonoBehaviour
 
     public InventoryItem TakeItem(int index)
     {
-        if (Items.Count <= index) return null;
+        if (Items[index] == null) return null;
 
         InventoryItem item = Items[index];
 
@@ -47,7 +81,7 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            Items.RemoveAt(index);
+            Items[index] = null;
         }
 
         ItemsUpdated(this, new InventoryEventArgs());
@@ -70,7 +104,6 @@ public class Inventory : MonoBehaviour
         }
 
         PositionUpdated(this, CurrentlySelected);
-        Debug.Log(CurrentlySelected);
     }
 }
 

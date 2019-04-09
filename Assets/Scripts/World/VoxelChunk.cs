@@ -131,8 +131,6 @@ public class VoxelChunk : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
 
-        Debug.Log("updating " + gameObject.name);
-
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
