@@ -33,7 +33,7 @@ public class MeshCombiner
                 {
                     continue;
                 }
-
+                int submehscount = meshFilter.sharedMesh.subMeshCount;
                 // Add meshes to list
                 for (int s = 0; s < meshFilter.sharedMesh.subMeshCount; s++)
                 {
